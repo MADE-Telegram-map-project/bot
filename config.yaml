@@ -1,0 +1,7 @@
+data:
+  dir: data
+  ch_labse: ${.dir}/channels_LaBSE.npy
+  emb_labse: ${.dir}/embeddings_LaBSE.npy
+  channels: ${.dir}/Channels.csv
+bot:
+  token: ${oc.env:TELEMAP_BOT_TOKEN}

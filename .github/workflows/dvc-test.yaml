@@ -1,0 +1,70 @@
+name: Test DVC data and requirements
+
+on:
+  push:
+    branches: [master, develop]
+    paths:
+      - '**.py'
+      - 'configs/**'
+      - log_settings.yaml
+      - requirements*.txt
+      - dvc.yaml
+      - dvc.lock
+      - '**.dvc'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [master, develop]
+    paths:
+      - '**.py'
+      - 'configs/**'
+      - log_settings.yaml
+      - requirements*.txt
+      - dvc.yaml
+      - dvc.lock
+      - '**.dvc'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Cache pip dependecies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+            ${{ github.workspace }}/.dvc/cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements*txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -r requirements.txt -r requirements.dev.txt
+
+
+      - name: Test that all data in the remote cache
+        env:
+          GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_DVC_DATA_SECRET }}
+          S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+        run: |
+          cat << EOF > ./.dvc/config.local
+          ['remote "remote-s3"']
+            access_key_id = ${S3_KEY_ID}
+            secret_access_key = ${S3_ACCESS_KEY}
+          EOF
+          
+          dvc fetch -v
+      

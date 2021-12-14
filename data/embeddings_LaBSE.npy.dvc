@@ -1,0 +1,4 @@
+outs:
+- md5: e5ead77d65107cbbdd64a5815c00dc32
+  size: 50420864
+  path: embeddings_LaBSE.npy

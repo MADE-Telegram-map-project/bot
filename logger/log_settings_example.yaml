@@ -1,0 +1,34 @@
+version: 1
+formatters:
+  default_console_thread:
+    (): log_set.utc_formatter.UTCFormatter
+    format: '%(asctime)s %(levelname)s %(threadName)s %(module)s %(funcName)s %(message)s'
+  default_console_process:
+    (): log_set.utc_formatter.UTCFormatter
+    format: '%(asctime)s %(levelname)s %(processName)s %(module)s %(funcName)s %(message)s'
+  color_formatter:
+    (): log_set.utc_formatter.ColoredFormatter
+    format: '%(log_color)s %(asctime)s %(levelname)s %(threadName)s %(module)s %(funcName)s %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: default_console_thread
+    stream: ext://sys.stdout
+  colored_console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: color_formatter
+    stream: ext://sys.stdout
+loggers:
+  custom:
+    level: DEBUG
+    handlers: [console]
+    propagate: no
+  colored:
+    level: DEBUG
+    handlers: [colored_console]
+    propagate: no
+root:
+  level: INFO
+  handlers: [console]

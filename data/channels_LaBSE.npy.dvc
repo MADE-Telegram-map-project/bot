@@ -1,0 +1,4 @@
+outs:
+- md5: 008468a9daeed73ac7ce04e071af705b
+  size: 131432
+  path: channels_LaBSE.npy

@@ -1,0 +1,9 @@
+[core]
+    remote = remote-s3
+
+['remote "remote-data"']
+    url = gdrive://1DGiEJc7XlZyowNKYPXpg7itsD9-A6zwS
+
+['remote "remote-s3"']
+    url = s3://dvc/analysis
+    endpointurl = http://34.116.244.97:6790

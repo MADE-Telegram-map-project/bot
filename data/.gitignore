@@ -1,0 +1,13 @@
+/metainfo.pkl.gz
+/message_documents.pkl.gz
+/message_tokens.pkl.gz
+/sparse_documents_tfidf.npz
+/channel_info.csv
+/sorted_messages.csv 
+/channels_navec.npy
+/embeddings_navec.npy
+/channels_LaBSE.npy
+/embeddings_LaBSE.npy
+/Channels.csv
+/meta_labse.csv
+/SortedChannelMessages.csv.bz2
