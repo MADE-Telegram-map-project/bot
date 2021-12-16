@@ -13,4 +13,5 @@ gensim~=4.1.2
 hydra-core~=1.1.1
 umap-learn~=0.5.2
 umap-learn[plot]
-pyTelegramBotAPI==4.0.0
+pyTelegramBotAPI~=4.0.0
+navec~=0.10.0

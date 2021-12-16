@@ -14,9 +14,11 @@ MIN_WORD_NUM = 7  # min number of word in one message
 class BaseEmbedder:
     """ output of _preprocess_messages will pass to channel2vec """
 
-    def __init__(self, messages_data: Iterable[MessageData]):
-        self.messages_data = messages_data
-        self._get_cur()
+    def __init__(self, messages_data: Iterable[MessageData], load_data=True):
+        self.load_data = load_data
+        if load_data:
+            self.messages_data = messages_data
+            self._get_cur()
 
     def _get_cur(self, cur_mes: MessageData = None):
         cur_mes = cur_mes or next(self.messages_data)
@@ -41,6 +43,9 @@ class BaseEmbedder:
         channels = []
         passes = 0
         total = num_channel + 1 or 16500
+
+        if not self.load_data:
+            raise("Cannot compute embeddings")
         
         for i, (ch, messages) in tqdm.tqdm(enumerate(
                 self.get_messages_from_channel()), total=total):
