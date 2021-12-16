@@ -1,0 +1,45 @@
+name: Remote deployment
+
+on:   
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - '**.py'
+      - '**/Dockerfile'
+      - '**/requirements*.txt'
+      - '**/.github/**.yaml'
+
+  pull_request:
+    paths:
+      - '**.py'
+      - '**/Dockerfile'
+      - '**/requirements*.txt'
+      - '**/.github/**.yaml'
+
+  workflow_dispatch:
+
+jobs:
+    remote-deploy:
+      runs-on: ubuntu-20.04
+      
+      permissions:
+        packages: write
+        contents: read
+
+      steps:
+        - uses: actions/checkout@v2
+
+        - name: Install SSH key
+          uses: shimataro/ssh-key-action@v2
+          with:
+            key: ${{ secrets.SSH_KEY }}
+            name: ssh_key
+            known_hosts: 'null'
+            if_key_exists: fail # replace / ignore / fail; optional (defaults to fail)
+        
+        - name: Test ssh
+          run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/ssh_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} ls
+        
+    

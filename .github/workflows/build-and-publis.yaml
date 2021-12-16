@@ -3,7 +3,7 @@ name: Build and push Docker images
 on:   
   push:
     branches:
-      - main
+      - master
       - develop
     paths:
       - '**.py'
@@ -64,3 +64,5 @@ jobs:
             docker tag ${{ steps.get_image_name.outputs.image_name }} $IMAGE_ID
 
             docker push $IMAGE_ID
+    
+    
