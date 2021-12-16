@@ -5,9 +5,11 @@ import torch
 from transformers import AutoModel, AutoTokenizer
 from transformers.tokenization_utils_base import BatchEncoding
 
-from core.preprocessing import drop_links
+from core.preprocessing import drop_links, clear_emoji, split_sentences
 from core.vectorizers.base import BaseEmbedder
 from core.preprocessing import messages_generator
+
+import nltk
 
 DEFAULT_MODEL_NAME = "cointegrated/LaBSE-en-ru"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -30,13 +32,15 @@ class TransEmbedder(BaseEmbedder):
             min_word_num=MIN_WORD_NUM,
             min_message_num=MIN_MESSAGE_NUM) -> BatchEncoding:
         cleaned_messages = []
+        nltk.download('punkt')
         for m in messages:
             cm = drop_links(m)
-            # TODO clean message from emodji
-            # TODO split to sentences
+            cm = clear_emoji(cm)
+            cm = split_sentences(cm)
 
-            if len(cm.split()) > min_word_num:
-                cleaned_messages.append(cm)
+            for sentence in cm:
+                if len(sentence.split(' ')) > min_word_num:
+                    cleaned_messages.append(cm)
 
         if len(cleaned_messages) < min_message_num:
             return []
