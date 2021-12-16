@@ -11,6 +11,6 @@ setup(
     author_email="None",
     license="MIT",
     install_requires=req_list,
-    packages=find_packages(),
+    packages=find_packages(include="core*"),
     python_requires=">=3.6",
 )
