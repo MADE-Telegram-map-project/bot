@@ -10,6 +10,8 @@ COPY ./requirements.txt ./
 
 ENV PATH=/opt/venv/bin:${PATH}
 
+RUN pip install wheel
+
 RUN --mount=type=cache,id=pip-cache,target=/root/.cache/pip pip install -r ./requirements.txt
 
 COPY ./logger ./logger
@@ -37,6 +39,10 @@ ENV PATH=/opt/venv/bin:${PATH}
 
 WORKDIR /home/app
 
-COPY ./bot.py ./config.yaml ./
+COPY ./data ./data
+
+COPY ./bot.py ./config.yaml ./log_settings.yaml ./
+
+ENV LOG_CONFIG=./log_settings.yaml
 
 CMD python ./bot.py 

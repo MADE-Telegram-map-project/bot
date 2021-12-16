@@ -29,6 +29,10 @@ loggers:
     level: DEBUG
     handlers: [colored_console]
     propagate: no
+  core.ranking_model:
+    level: DEBUG
+    handlers: [colored_console]
+    propagate: no
 root:
   level: INFO
   handlers: [console]

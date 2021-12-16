@@ -1,4 +1,4 @@
-name: Build and push Docker images
+name: Build, push and deploy 
 
 on:   
   push:
@@ -26,9 +26,85 @@ on:
         required: true
 
 jobs:
-    build-and-push-producer:
-      runs-on: ubuntu-20.04
+    # build-and-push-producer:
+    #   runs-on: ubuntu-20.04
       
+    #   permissions:
+    #     packages: write
+    #     contents: read
+
+    #   steps:
+    #     - uses: actions/checkout@v2
+
+    #     - uses: FranzDiebold/github-env-vars-action@v2
+
+    #     - name: Set up Python 3.9
+    #       uses: actions/setup-python@v2
+    #       with:
+    #         python-version: 3.9
+
+    #     - name: Image name
+    #       id: get_image_name
+    #       run: echo "::set-output name=image_name::tg-bot:${CI_REF_NAME_SLUG}"
+        
+    #     - name: Cache dvc and pip
+    #       uses: actions/cache@v2
+    #       with:
+    #         path: |
+    #           ~/.cache/pip
+    #           ${{ github.workspace }}/.dvc/cache
+    #         key: ${{ runner.os }}-pip-${{ hashFiles('requirements*txt') }}
+    #         restore-keys: |
+    #           ${{ runner.os }}-pip-
+    #           ${{ runner.os }}-
+
+    #     - name: Install dependencies
+    #       run: |
+    #         pip install -r ./requirements.dev.txt
+
+    #     - name: Test that all data in the remote cache
+    #       env:
+    #         GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_DVC_DATA_SECRET }}
+    #         S3_KEY_ID: ${{ secrets.S3_KEY_ID }}
+    #         S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+    #       run: |
+    #         cat << EOF > ./.dvc/config.local
+    #         ['remote "remote-s3"']
+    #           access_key_id = ${S3_KEY_ID}
+    #           secret_access_key = ${S3_ACCESS_KEY}
+    #         EOF
+
+    #         dvc pull
+
+    #     - name: Build producer image
+    #       env:
+    #         DOCKER_BUILDKIT: 1
+    #       run: docker build -t ${{ steps.get_image_name.outputs.image_name }} --label "runnumber=${GITHUB_RUN_ID}" .
+
+    #     - name: Log in to registry
+    #       if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}
+    #       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    #     - name: Push image
+    #       if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}
+    #       run: |
+    #         IMAGE_ID=ghcr.io/${CI_REPOSITORY_OWNER_SLUG}/${{ steps.get_image_name.outputs.image_name }}
+
+    #         # Strip git ref prefix from version
+    #         # VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+    #         echo IMAGE_ID=$IMAGE_ID
+            
+    #         docker tag ${{ steps.get_image_name.outputs.image_name }} $IMAGE_ID
+
+    #         docker push $IMAGE_ID
+    
+    remote-deploy:
+      # if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}
+      # needs: build-and-push-producer
+
+      runs-on: ubuntu-20.04
+
       permissions:
         packages: write
         contents: read
@@ -36,33 +112,27 @@ jobs:
       steps:
         - uses: actions/checkout@v2
 
-        - uses: FranzDiebold/github-env-vars-action@v2
-
-        - name: Image name
-          id: get_image_name
-          run: echo "::set-output name=image_name::tg-bot:${CI_REF_NAME_SLUG}"
-
-        - name: Build producer image
-          env:
-            DOCKER_BUILDKIT: 1
-          run: docker build -t ${{ steps.get_image_name.outputs.image_name }} --label "runnumber=${GITHUB_RUN_ID}" .
-
-        - name: Log in to registry
-          if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}
-          run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-        - name: Push image
-          if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}
-          run: |
-            IMAGE_ID=ghcr.io/${CI_REPOSITORY_OWNER_SLUG}/${{ steps.get_image_name.outputs.image_name }}
-
-            # Strip git ref prefix from version
-            # VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-
-            echo IMAGE_ID=$IMAGE_ID
+        - name: Install SSH key
+          uses: shimataro/ssh-key-action@v2
+          with:
+            key: ${{ secrets.SSH_KEY }}
+            name: ssh_key
+            known_hosts: 'null'
+            if_key_exists: fail
+        
+        - name: Deploy on remote host
+          run: | 
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/ssh_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} 'mkdir -p ~/bot'
+            scp -o StrictHostKeyChecking=no -i ~/.ssh/ssh_key ${{ github.workspace}}/docker-compose.yaml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:'~/bot/'
+            cat << EOF > ./.env
+              TELEMAP_BOT_TOKEN=${{ secrets.TELEMAP_BOT_TOKEN }}
+              REGISTRY_URL=ghcr.io/made-telegram-map-project/ 
+            EOF
+            scp -o StrictHostKeyChecking=no -i ~/.ssh/ssh_key ./.env ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:'~/bot/'
+            rm ./.env
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/ssh_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} 'cd ~/bot && docker compose down && docker compose pull && docker compose up -d'
             
-            docker tag ${{ steps.get_image_name.outputs.image_name }} $IMAGE_ID
 
-            docker push $IMAGE_ID
+          
     
     

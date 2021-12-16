@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import List
+import logging
 
 import telebot
 from telebot import types
@@ -7,6 +8,10 @@ from telebot import types
 from core.entities.data import MainConfig
 from core.config import load_config
 from core.ranking_model import Ranker
+
+import log_set
+
+LOGGER = logging.getLogger()
 
 
 path_to_config = "config.yaml"
@@ -117,4 +122,5 @@ def catch_all(message: telebot.types.Message):
 
 
 if __name__ == '__main__':
+    LOGGER.info("Bot started...")
     bot.polling()

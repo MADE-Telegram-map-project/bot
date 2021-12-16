@@ -1,4 +1,5 @@
 import re
+import logging
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,10 @@ from core.entities.data import MainConfig
 class Ranker:
     def __init__(self, config: MainConfig):
         self.config = config
+        self._logger = logging.getLogger(__name__)
+        self._logger.info("Load embeddings...")
         self.emb = read_numpy_array(self.config.data.emb_labse)
+        self._logger.info("Load channels...")
         self.chans = read_numpy_array(self.config.data.ch_labse)
         meta = pd.read_csv(self.config.data.channels)
         meta = meta[meta.channel_id.isin(self.chans)]
@@ -33,7 +37,7 @@ class Ranker:
         else:
             emb = None  # TODO get embedding of new channel (parse and process)
         return username, emb
-    
+
     def get_closest_channels(self, query: str, topn=5):
         username, emb = self.get_channel_embedding(query)
         if emb is None:
@@ -44,7 +48,7 @@ class Ranker:
         closest_channel_ids = self.chans[topn_idx]
         closest_usernames = [self.channel_id2username[i] for i in closest_channel_ids]
         df = self.meta[
-            (self.meta.link.isin(closest_usernames)) & 
+            (self.meta.link.isin(closest_usernames)) &
             (self.meta.link != username) &
             (~self.meta.link.str.endswith("bot"))
         ]
@@ -57,7 +61,7 @@ class Ranker:
         return channels
 
     def get_channel_by_description(self, text: str):
-        
+
         return None
 
     @staticmethod
@@ -82,7 +86,7 @@ if __name__ == "__main__":
     config = load_config(PATH_TO_CONFIG)
     print(config)
     ranker = Ranker(config)
-    
+
     username = "sliv_halyavy"
     top = ranker.get_closest_channels(username)
     if top is None:
