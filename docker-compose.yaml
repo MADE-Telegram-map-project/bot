@@ -3,7 +3,7 @@ version: '3.7'
 
 services:
   tg-bot:
-    image: ${REGISTRY_URL}tg-bot:develop  
+    image: ${REGISTRY_URL}tg-bot:master  
     build: .
     environment:
       - TELEMAP_BOT_TOKEN=${TELEMAP_BOT_TOKEN:?}

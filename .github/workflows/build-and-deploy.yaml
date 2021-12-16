@@ -9,7 +9,9 @@ on:
       - '**.py'
       - '**/Dockerfile'
       - '**/requirements*.txt'
+      - '**/*.yaml'
       - '**/.github/**.yaml'
+      - '**/*.dvc'
 
   pull_request:
     paths:
@@ -17,6 +19,8 @@ on:
       - '**/Dockerfile'
       - '**/requirements*.txt'
       - '**/.github/**.yaml'
+      - '**/*.yaml'
+      - '**/*.dvc'
 
   workflow_dispatch:
     inputs:
