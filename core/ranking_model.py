@@ -78,7 +78,7 @@ class Ranker:
 
 
 if __name__ == "__main__":
-    PATH_TO_CONFIG = "config.yaml"
+    PATH_TO_CONFIG = "messages2vec/config.yaml"
     config = load_config(PATH_TO_CONFIG)
     print(config)
     ranker = Ranker(config)

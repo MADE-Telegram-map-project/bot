@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import scipy.sparse
 
+RECENTLY = "2021-05-31"
+
 MessageData = namedtuple("MessageData", ["message_id", "channel_id", "message"])
 dtypes = {
     "message_id": np.int64,
@@ -28,7 +30,13 @@ def read_messages_metadata(path: str) -> pd.DataFrame:
     return df
 
 
-def messages_generator(path: str, max_num=-1):
+def is_recent(raw_date: str):
+    """ date format - 2021-10-08 05:30:10+00:00 """
+    date = raw_date.split()[0]
+    return date > RECENTLY
+
+
+def messages_generator(path: str, max_num=-1, filter_by_date=True):
     """ read messages and return with indexes in MessageData object 
     sorted by channel id
     """
@@ -42,10 +50,16 @@ def messages_generator(path: str, max_num=-1):
                 mid_idx = i
             elif header[i] == "channel_id":
                 cid_idx = i
+            elif header[i] == "date":
+                dat_idx = i
 
         for i, row in enumerate(reader):
             if i == max_num:
                 break
+            date = row[dat_idx]
+            if not is_recent(date) and filter_by_date:
+                continue
+
             message_id, channel_id = int(row[mid_idx]), int(row[cid_idx])
             message = row[mes_idx]
             if message is None or message == "":
@@ -100,7 +114,7 @@ def read_numpy_array(path: str, **kwargs):
 
 
 if __name__ == "__main__":
-    path = "data/raw_16k/Messages.csv"
+    path = "messages2vec/data/sorted_messages.csv"
 
     messages = messages_generator(path, 10000)
     

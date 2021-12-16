@@ -2,6 +2,7 @@ from typing import Iterable, List
 
 import numpy as np
 import tqdm
+from transformers.tokenization_utils_base import BatchEncoding
 
 from core.read_write import MessageData, messages_generator
 from core.preprocessing import drop_links
@@ -12,6 +13,7 @@ MIN_WORD_NUM = 7  # min number of word in one message
 
 class BaseEmbedder:
     """ output of _preprocess_messages will pass to channel2vec """
+
     def __init__(self, messages_data: Iterable[MessageData]):
         self.messages_data = messages_data
         self._get_cur()
@@ -37,18 +39,26 @@ class BaseEmbedder:
     def compute_embeddings(self, num_channel=-1):
         embeddings = []
         channels = []
+        passes = 0
+        total = num_channel + 1 or 16500
+        
         for i, (ch, messages) in tqdm.tqdm(enumerate(
-                self.get_messages_from_channel()), total=16500):
+                self.get_messages_from_channel()), total=total):
             if i == num_channel:
                 break
-            messages = self._preprocess_messages(messages)
-            if len(messages) < MIN_MESSAGE_NUM:
+            pmessages = self._preprocess_messages(messages)
+            mes_num = pmessages["input_ids"].shape[0] if isinstance(
+                pmessages, BatchEncoding) else len(pmessages)
+
+            if mes_num < MIN_MESSAGE_NUM:
+                passes += 1
                 continue
-            emb = self.channel2vec(messages)
+            
+            emb = self.channel2vec(pmessages)
             if isinstance(emb, np.ndarray):
                 channels.append(ch)
                 embeddings.append(emb)
-
+        print(f"passed {passes} channels with number of valid messages less than {MIN_MESSAGE_NUM}")
         return np.array(channels), np.array(embeddings)
 
     def get_messages_from_channel(self):
