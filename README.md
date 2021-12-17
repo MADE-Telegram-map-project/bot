@@ -23,7 +23,7 @@ raw data is in data/raw_16k
 
 [SQL Запрос на вычисление пересечения каналов по пользователям](https://gist.github.com/KernelA/22a65f1631c3b586c34d32c63fbd6141)
 
+
 ## Пакет для логгирования
 
 [См. README.md](logger/README.md)
-
