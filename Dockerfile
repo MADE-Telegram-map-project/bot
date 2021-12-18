@@ -39,8 +39,6 @@ ENV PATH=/opt/venv/bin:${PATH}
 
 WORKDIR /home/app
 
-COPY ./data ./data
-
 COPY ./bot.py ./config.yaml ./log_settings.yaml ./
 
 ENV LOG_CONFIG=./log_settings.yaml
