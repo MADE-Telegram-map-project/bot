@@ -6,6 +6,7 @@ from functools import partial
 from multiprocessing import Pool
 
 import demoji
+import nltk
 from nltk import download
 from nltk.corpus import stopwords as SW
 from nltk.stem import SnowballStemmer
@@ -130,6 +131,17 @@ def get_messages(
             chunksize
         )
     return messages
+
+
+def clear_emoji(message: str):
+    return demoji.replace(message)
+
+
+def split_sentences(message: str):
+    sentences = []
+    for sentence in nltk.sent_tokenize(message):
+        sentences.append(sentence)
+    return sentences
 
 
 if __name__ == "__main__":
