@@ -1,0 +1,10 @@
+version: '3.7'
+
+
+services:
+  test-tg-bot:
+    image: ${REGISTRY_URL}${IMAGE_NAME:?tg-bot:master}
+    command: python ./test_functionality.py
+    build: .
+    environment:
+      - TELEMAP_BOT_TOKEN=none

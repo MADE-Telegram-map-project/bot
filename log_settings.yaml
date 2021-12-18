@@ -1,4 +1,5 @@
 version: 1
+disable_existing_logger: false
 formatters:
   default_console_thread:
     (): log_set.utc_formatter.UTCFormatter
@@ -34,5 +35,5 @@ loggers:
     handlers: [colored_console]
     propagate: no
 root:
-  level: INFO
+  level: DEBUG
   handlers: [console]

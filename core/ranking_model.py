@@ -1,5 +1,6 @@
 import re
 import logging
+import pkg_resources
 
 import numpy as np
 import pandas as pd
@@ -16,10 +17,10 @@ class Ranker:
         self.config = config
         self._logger = logging.getLogger(__name__)
         self._logger.info("Load embeddings...")
-        self.emb = read_numpy_array(self.config.data.emb_labse)
+        self.emb = read_numpy_array(pkg_resources.resource_filename(__name__, self.config.data.emb_labse))
         self._logger.info("Load channels...")
-        self.chans = read_numpy_array(self.config.data.ch_labse)
-        meta = pd.read_csv(self.config.data.channels)
+        self.chans = read_numpy_array(pkg_resources.resource_filename(__name__, self.config.data.ch_labse))
+        meta = pd.read_csv(pkg_resources.resource_filename(__name__, self.config.data.channels))
         meta = meta[meta.channel_id.isin(self.chans)]
         self.meta = meta
         self.channel_id2username = dict(zip(self.meta.channel_id, self.meta.link))
