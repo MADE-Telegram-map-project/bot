@@ -32,7 +32,8 @@ class Ranker:
     def get_channel_embedding(self, username: str):
         username = self._preprocess_username(username)
         if username is None:
-            return None
+            self._logger.warn("Preprocessed username is None")
+            return None, None
 
         if username in self.username2emb:
             emb = self.username2emb[username]

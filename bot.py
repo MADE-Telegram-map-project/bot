@@ -9,8 +9,6 @@ from core.entities.data import MainConfig
 from core.config import load_config
 from core.ranking_model import Ranker
 
-import log_set
-
 LOGGER = logging.getLogger()
 
 

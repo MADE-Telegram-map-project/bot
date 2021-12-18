@@ -14,6 +14,7 @@ from nltk.stem import SnowballStemmer
 from  .read_write import MessageData, messages_generator
 
 download("stopwords")
+download('punkt')
 stop_words = set(SW.words('english')).union(SW.words('russian'))
 stemmer_ru = SnowballStemmer("russian")
 stemmer_en = SnowballStemmer("english")
