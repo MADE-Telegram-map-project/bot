@@ -100,8 +100,8 @@ class TransEmbedder(BaseEmbedder):
 
     def description2vec(self, text: str):
         description = [text]
-        tokens = self._preprocess_messages(description, 1, 1)
-        channel_emb = self.channel2vec(tokens)
+        sentences = self._preprocess_messages(description, 1, 1)
+        channel_emb = self.channel2vec(sentences)
         return channel_emb
 
 

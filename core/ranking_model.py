@@ -1,3 +1,4 @@
+import enum
 import re
 import logging
 import pkg_resources
@@ -10,6 +11,13 @@ from core.read_write import read_numpy_array
 from core.config import load_config
 from core.entities.data import MainConfig
 from core.vectorizers import TransEmbedder
+from core.web_parsing import parse_channel_web
+
+
+class ProcessingStatus(enum.IntEnum):
+    SUCCESS = enum.auto()
+    FAIL = enum.auto()
+    PASS = enum.auto()
 
 
 class Ranker:
@@ -39,7 +47,12 @@ class Ranker:
         if username in self.username2emb:
             emb = self.username2emb[username]
         else:
-            emb = None  # TODO get embedding of new channel (parse and process)
+            header = parse_channel_web(username)
+            if len(header) < 3:
+                emb = None
+            else:
+                description = header  # TODO preprocess header
+                emb = self.get_channels_by_description(description)
         return username, emb
 
     def get_closest_channels(self, query: str, topn=5):
@@ -66,6 +79,7 @@ class Ranker:
 
     def get_channels_by_description(self, text: str):
         emb = self.transformer.description2vec(text)
+        # TODO sim search like in `get_closest_channels` but use transformer functions
         return None
 
     @staticmethod
