@@ -1,0 +1,4 @@
+outs:
+- md5: c9a584f89add8b67cb2931de9e8bdb5b
+  size: 7480
+  path: channels.npy

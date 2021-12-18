@@ -45,7 +45,7 @@ class BaseEmbedder:
         total = num_channel + 1 or 16500
 
         if not self.load_data:
-            raise("Cannot compute embeddings")
+            raise Exception("Cannot compute embeddings")
         
         for i, (ch, messages) in tqdm.tqdm(enumerate(
                 self.get_messages_from_channel()), total=total):

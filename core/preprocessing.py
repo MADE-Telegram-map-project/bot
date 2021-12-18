@@ -51,8 +51,18 @@ def tokenize_message(doc: str, stemming=True) -> List[str]:
 def drop_links(text: str) -> str:
     for link_regex, replace in LINK_REGEX.items():
         text = re.sub(link_regex, replace, text)  # drop joinchat links
-
     return text
+
+
+def clear_emoji(message: str):
+    return demoji.replace(message)
+
+
+def split_sentences(message: str):
+    sentences = []
+    for sentence in nltk.sent_tokenize(message):
+        sentences.append(sentence)
+    return sentences
 
 
 def preprocess_message(text: str, is_lower: bool = True) -> str:
@@ -64,7 +74,6 @@ def preprocess_message(text: str, is_lower: bool = True) -> str:
 
     if is_lower:
         text = text.lower()
-
     try:
         text = drop_links(text)
         text = re.sub("[^a-zа-я\\s-]", "", text, flags=re.IGNORECASE)  # drop everything except
@@ -132,17 +141,6 @@ def get_messages(
             chunksize
         )
     return messages
-
-
-def clear_emoji(message: str):
-    return demoji.replace(message)
-
-
-def split_sentences(message: str):
-    sentences = []
-    for sentence in nltk.sent_tokenize(message):
-        sentences.append(sentence)
-    return sentences
 
 
 if __name__ == "__main__":

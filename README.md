@@ -27,3 +27,9 @@ raw data is in data/raw_16k
 ## Пакет для логгирования
 
 [См. README.md](logger/README.md)
+
+
+## Вычисление эмбеддингов
+```
+python calculate_embeddings_transformer.py
+```
