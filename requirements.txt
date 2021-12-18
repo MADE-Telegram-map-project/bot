@@ -15,4 +15,3 @@ umap-learn~=0.5.2
 umap-learn[plot]
 pyTelegramBotAPI~=4.0.0
 navec~=0.10.0
-sentence-transformers~=2.1.0
