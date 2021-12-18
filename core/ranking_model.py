@@ -8,12 +8,11 @@ from sklearn.metrics.pairwise import linear_kernel
 from core.read_write import read_numpy_array
 from core.config import load_config
 from core.entities.data import MainConfig
-# from core.vectorizers import TransEmbedder
-
+from core.vectorizers import TransEmbedder
 
 
 class Ranker:
-    def __init__(self, config: MainConfig):
+    def __init__(self, config: MainConfig, use_trans=True):
         self.config = config
         self._logger = logging.getLogger(__name__)
         self._logger.info("Load embeddings...")
@@ -26,6 +25,9 @@ class Ranker:
         self.channel_id2username = dict(zip(self.meta.channel_id, self.meta.link))
         ordered_chans = [self.channel_id2username[x] for x in self.chans]
         self.username2emb = dict(zip(ordered_chans, self.emb))
+        self.transformer = None
+        if use_trans:
+            self.transformer = TransEmbedder(messages_data=None, load_data=False)
 
     def get_channel_embedding(self, username: str):
         username = self._preprocess_username(username)
@@ -60,8 +62,8 @@ class Ranker:
         channels = df[["link", "title"]].values
         return channels
 
-    def get_channel_by_description(self, text: str):
-
+    def get_channels_by_description(self, text: str):
+        emb = self.transformer.description2vec(text)
         return None
 
     @staticmethod

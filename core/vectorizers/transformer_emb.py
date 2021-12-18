@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 from transformers.tokenization_utils_base import BatchEncoding
+from sentence_transformers import SentenceTransformer
 
 from core.preprocessing import drop_links, clear_emoji, split_sentences
 from core.vectorizers.base import BaseEmbedder
@@ -12,6 +13,8 @@ from core.preprocessing import messages_generator
 import nltk
 
 DEFAULT_MODEL_NAME = "cointegrated/LaBSE-en-ru"
+NEW_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 MIN_MESSAGE_NUM = 20  # min number of messages in one channel
@@ -20,12 +23,15 @@ MAX_TOKEN_LENGHT = 64
 
 
 class TransEmbedder(BaseEmbedder):
-    def __init__(self, model_name=DEFAULT_MODEL_NAME, device=DEVICE, *args, **kwargs):
+    def __init__(self, model_name=NEW_MODEL_NAME, device=DEVICE, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.device = device
         self.model_name = model_name
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModel.from_pretrained(self.model_name).to(device)
+        if model_name == DEFAULT_MODEL_NAME:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.model = AutoModel.from_pretrained(self.model_name).to(device)
+        elif model_name == NEW_MODEL_NAME:
+            self.model = SentenceTransformer(model_name)
 
     def _preprocess_messages(
             self, messages: List[str],
@@ -44,8 +50,11 @@ class TransEmbedder(BaseEmbedder):
 
         if len(cleaned_messages) < min_message_num:
             return []
-
-        tokens = self._tokenize_text(cleaned_messages)
+        
+        if self.model_name == DEFAULT_MODEL_NAME:
+            tokens = self._tokenize_text(cleaned_messages)
+        elif self.model_name == NEW_MODEL_NAME:
+            tokens = cleaned_messages
         return tokens
 
     def _tokenize_text(self, text: List[str]):
@@ -66,12 +75,16 @@ class TransEmbedder(BaseEmbedder):
         channel_emb = np.mean(embs, axis=0)
         return channel_emb
 
-    def apply_model(self, tokens: BatchEncoding) -> np.ndarray:
-        with torch.no_grad():
-            model_output = self.model(**tokens)
-        embs = model_output.pooler_output
-        embs = torch.nn.functional.normalize(embs)
-        embs = embs.cpu().detach().numpy()
+    def apply_model(self, sentences: BatchEncoding) -> np.ndarray:
+        if self.model_name == DEFAULT_MODEL_NAME:
+            with torch.no_grad():
+                model_output = self.model(**sentences)
+            embs = model_output.pooler_output
+            embs = torch.nn.functional.normalize(embs)
+            embs = embs.cpu().detach().numpy()
+        elif self.model_name == NEW_MODEL_NAME:
+            embs = self.model.encode(sentences, 128)
+
         return embs
 
     def description2vec(self, text: str):

@@ -1,3 +1,4 @@
 autopep8
 pylint
 dvc[gdrive,s3]~=2.8.0
+pytest~=6.2.5
