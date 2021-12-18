@@ -1,4 +1,5 @@
 from typing import List
+import random
 
 import numpy as np
 import torch
@@ -15,14 +16,15 @@ NEW_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-MIN_MESSAGE_NUM = 20  # min number of messages in one channel
-MIN_WORD_NUM = 7  # min number of word in one message
+MIN_MESSAGE_NUM = 20    # min number of messages in one channel
+MIN_WORD_NUM = 7        # min number of word in one message
+MAX_SENTENCES_NUM = 500
 MAX_TOKEN_LENGHT = 64
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 
 
 class TransEmbedder(BaseEmbedder):
-    def __init__(self, model_name=DEFAULT_MODEL_NAME, device=DEVICE, *args, **kwargs):
+    def __init__(self, model_name=NEW_MODEL_NAME, device=DEVICE, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.device = device
         self.model_name = model_name
@@ -36,24 +38,34 @@ class TransEmbedder(BaseEmbedder):
             self, messages: List[str],
             min_word_num=MIN_WORD_NUM,
             min_message_num=MIN_MESSAGE_NUM) -> BatchEncoding:
-        cleaned_messages = []
-        
+       
+        sentences = []
         for m in messages:
-            cm = drop_links(m)
-            cm = clear_emoji(cm)
-            sents = split_sentences(cm)
-
+            sents = split_sentences(m)
             for sentence in sents:
                 if len(sentence.split(' ')) > min_word_num:
-                    cleaned_messages.append(sentence)
-
-        if len(cleaned_messages) < min_message_num:
+                    sentences.append(sentence)
+        
+        random.shuffle(sentences)
+        cleaned_sentences = [] 
+        for sent in sentences:
+            if len(cleaned_sentences) > MAX_SENTENCES_NUM:
+                break
+            cs = drop_links(sent)
+            cs = clear_emoji(cs)
+            cleaned_sentences.append(cs)
+        
+        if len(cleaned_sentences) < min_message_num:
             return []
+        elif len(cleaned_sentences) > MAX_SENTENCES_NUM:
+            cleaned_sentences = random.sample(cleaned_sentences, k=MAX_SENTENCES_NUM)
         
         if self.model_name == DEFAULT_MODEL_NAME:
-            tokens = self._tokenize_text(cleaned_messages)
+            tokens = self._tokenize_text(cleaned_sentences)
         elif self.model_name == NEW_MODEL_NAME:
-            tokens = cleaned_messages
+            tokens = cleaned_sentences
+        else:
+            raise ValueError("No such model")
         return tokens
 
     def _tokenize_text(self, text: List[str]):
@@ -96,7 +108,8 @@ class TransEmbedder(BaseEmbedder):
 if __name__ == "__main__":
     path = "data/sorted_messages.csv"
 
-    transmb = TransEmbedder(messages_data=messages_generator(path))
+    transmb = TransEmbedder(messages_data=messages_generator(path), 
+                            model_name=NEW_MODEL_NAME)
     ch, embs = transmb.compute_embeddings(10)
     print(ch[:10])
 

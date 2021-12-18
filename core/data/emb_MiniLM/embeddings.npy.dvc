@@ -1,0 +1,4 @@
+outs:
+- md5: cb3704ffbe36810bc86a139b2bb04e35
+  size: 1411712
+  path: embeddings.npy
