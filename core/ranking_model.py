@@ -14,11 +14,12 @@ from core.read_write import read_numpy_array
 from core.vectorizers import TransEmbedder
 from core.web_parsing import parse_channel_web
 
-SIM_CUTOFF = 0.7
+SIM_CUTOFF_DEFAULT = 0.7
+SIM_CUTOFF_DESCR = 0.5
 
 
 class Ranker:
-    def __init__(self, config: MainConfig, use_trans=True, sim_cutoff=SIM_CUTOFF):
+    def __init__(self, config: MainConfig, use_trans=True, sim_cutoff=SIM_CUTOFF_DEFAULT):
         self.config = config
         self.use_trans = use_trans
         self.sim_cutoff = sim_cutoff
@@ -42,7 +43,6 @@ class Ranker:
         # ordered_chans = [self.channel_id2username[x] for x in self.chan_ids]
         # self.username2emb = dict(zip(ordered_chans, self.emb))
 
-        # self.channel_id2similar = defaultdict(list)  # TODO delete
         self.username2similar = defaultdict(list)
         self._precalculate_sim_scores()
         self.transformer = None
@@ -63,7 +63,6 @@ class Ranker:
             similar_channel_ids = [self.chan_ids[x] for x in indexes_of_sim]
             channel_id = self.chan_ids[i]
             username = self.channel_id2username[channel_id]
-            # self.channel_id2similar[channel_id] = similar_channel_ids
             self.username2similar[username] = similar_channel_ids
 
     def get_channels_by_username(self, query: str, k=5):
@@ -91,13 +90,14 @@ class Ranker:
         channels = df[["link", "title"]].values
         return channels
 
-    def get_channels_by_description(self, description: str, k=5):
+    def get_channels_by_description(
+            self, description: str, k=5, sim_cutoff=SIM_CUTOFF_DESCR):
         """ main func: search by description """
         if not self.use_trans:
             return None  # TODO status of no loaded transformer
 
         emb = self.description_vectorize([description])
-        sim_chan_indexes = self.search_by_embedding(emb, sim_cutoff=0.6)
+        sim_chan_indexes = self.search_by_embedding(emb, sim_cutoff=sim_cutoff)
         if len(sim_chan_indexes) == 0:
             return None  # TODO status no channels for such descr, try to extend it
 
@@ -116,8 +116,6 @@ class Ranker:
 
     def known_channel_processing(self, username: str, k=5) -> List[int]:
         """ return indexes of similar channels """
-        # channel_id = self.username2channel_id[username]
-        # sim_channel_ids = self.channel_id2similar[channel_id]
         sim_channel_ids = self.username2similar[username]
         sim_channel_ids_top = sim_channel_ids[:k]
         return sim_channel_ids_top
@@ -129,7 +127,7 @@ class Ranker:
             return None
         sim_chan_indexes = self.search_by_embedding(emb)
         self.username2similar[username] = sim_chan_indexes
-        sim_chan_indexes = sim_chan_indexes[:k]  # TODO modify for more-button
+        sim_chan_indexes = sim_chan_indexes[:k]  # TODO modify for more-button or not this channel will be in history when more-button will be pressed
         return sim_chan_indexes
 
     def get_unk_channel_vec(self, username: str):
@@ -186,14 +184,14 @@ if __name__ == "__main__":
     print("ranker loaded\n\n")
 
     lst = ["psychics", "https://t.me/latinapopacanski"]
-    # for username in lst:
-    #     print(username)
-    #     top = ranker.get_channels_by_username(username)
-    #     if top is None:
-    #         print("No embedding")
-    #         exit(1)
-    #     print(top)
-    #     print("\n")
+    for username in lst:
+        print(username)
+        top = ranker.get_channels_by_username(username)
+        if top is None:
+            print("No embedding")
+            exit(1)
+        print(top)
+        print("\n")
 
     descriptions = [
         "латинский язык и древний рим", "канал про медицину", "медицина", 

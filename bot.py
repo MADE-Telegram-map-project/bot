@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import List
+from time import sleep
 import logging
 
 import telebot
@@ -97,6 +98,7 @@ def help_button_press(message: types.Message):
 
 @bot.message_handler(func=lambda message: user2state[message.chat.id] == S_CHAN)
 def similar_channel_sending_chan(message: types.Message):
+    sleep(5)
     chat_id = message.chat.id
     text = message.text
     top = ranker.get_channels_by_username(text)
@@ -117,6 +119,7 @@ def similar_channel_sending_chan(message: types.Message):
 
 @bot.message_handler(func=lambda message: user2state[message.chat.id] == S_DESC)
 def similar_channel_sending_desc(message: types.Message):
+    sleep(5)
     chat_id = message.chat.id
     text = message.text
     top = ranker.get_channels_by_description(text)
