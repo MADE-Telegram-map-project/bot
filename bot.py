@@ -14,6 +14,7 @@ LOGGER = logging.getLogger()
 
 path_to_config = "config.yaml"
 config: MainConfig = load_config(path_to_config)
+print(config)
 bot = telebot.TeleBot(config.bot.token)
 ranker = Ranker(config)
 
@@ -95,10 +96,10 @@ def help_button_press(message: types.Message):
 
 
 @bot.message_handler(func=lambda message: user2state[message.chat.id] == S_CHAN)
-def similar_channel_sending(message: types.Message):
+def similar_channel_sending_chan(message: types.Message):
     chat_id = message.chat.id
     text = message.text
-    top = ranker.get_closest_channels(text)
+    top = ranker.get_channels_by_username(text)
     if top is None:
         bot.send_message(
             chat_id, "Пока что я не могу найти каналы, похожие на этот",
@@ -115,7 +116,7 @@ def similar_channel_sending(message: types.Message):
 
 
 @bot.message_handler(func=lambda message: user2state[message.chat.id] == S_DESC)
-def similar_channel_sending(message: types.Message):
+def similar_channel_sending_desc(message: types.Message):
     chat_id = message.chat.id
     text = message.text
     top = ranker.get_channels_by_description(text)

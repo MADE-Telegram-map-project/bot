@@ -37,13 +37,13 @@ class TransEmbedder(BaseEmbedder):
     def _preprocess_messages(
             self, messages: List[str],
             min_word_num=MIN_WORD_NUM,
-            min_message_num=MIN_MESSAGE_NUM) -> BatchEncoding:
+            min_message_num=MIN_MESSAGE_NUM):
        
         sentences = []
         for m in messages:
             sents = split_sentences(m)
             for sentence in sents:
-                if len(sentence.split(' ')) > min_word_num:
+                if len(sentence.split(' ')) >= min_word_num:
                     sentences.append(sentence)
         
         random.shuffle(sentences)
@@ -98,10 +98,12 @@ class TransEmbedder(BaseEmbedder):
 
         return embs
 
-    def description2vec(self, text: str):
-        description = [text]
+    def description2vec(self, description: List[str]):
         sentences = self._preprocess_messages(description, 1, 1)
-        channel_emb = self.channel2vec(sentences)
+        if len(sentences) == 0:
+            channel_emb = None
+        else:
+            channel_emb = self.channel2vec(sentences)
         return channel_emb
 
 

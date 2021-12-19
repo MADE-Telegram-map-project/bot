@@ -5,8 +5,8 @@ from omegaconf import MISSING
 @dataclass
 class DataPath:
     dir: str
-    ch_labse: str
-    emb_labse: str
+    ch_full: str
+    emb_full: str
     channels: str
 
 
