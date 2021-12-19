@@ -16,8 +16,9 @@ NEW_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-MIN_MESSAGE_NUM = 20    # min number of messages in one channel
 MIN_WORD_NUM = 7        # min number of word in one message
+MIN_MESSAGE_NUM = 20    # min number of messages in one channel
+MIN_SENTENCE_NUM = 50
 MAX_SENTENCES_NUM = 500
 MAX_TOKEN_LENGHT = 64
 BATCH_SIZE = 128
@@ -34,31 +35,42 @@ class TransEmbedder(BaseEmbedder):
         elif model_name == NEW_MODEL_NAME:
             self.model = SentenceTransformer(model_name)
 
+
     def _preprocess_messages(
             self, messages: List[str],
             min_word_num=MIN_WORD_NUM,
-            min_message_num=MIN_MESSAGE_NUM) -> BatchEncoding:
+            min_message_num=MIN_MESSAGE_NUM,
+            min_sentence_num=MIN_SENTENCE_NUM,
+            max_sentence_num=MAX_SENTENCES_NUM):
        
         sentences = []
+        n_messages = 0
         for m in messages:
             sents = split_sentences(m)
+            _n_sentences = 0
             for sentence in sents:
-                if len(sentence.split(' ')) > min_word_num:
+                if len(sentence.split(' ')) >= min_word_num:
                     sentences.append(sentence)
+                    _n_sentences += 1
+
+            if _n_sentences > 1:
+                n_messages += 1
+        if n_messages < min_message_num:
+            return []
         
         random.shuffle(sentences)
         cleaned_sentences = [] 
         for sent in sentences:
-            if len(cleaned_sentences) > MAX_SENTENCES_NUM:
+            if len(cleaned_sentences) > max_sentence_num:
                 break
             cs = drop_links(sent)
             cs = clear_emoji(cs)
             cleaned_sentences.append(cs)
         
-        if len(cleaned_sentences) < min_message_num:
+        if len(cleaned_sentences) < min_sentence_num:
             return []
-        elif len(cleaned_sentences) > MAX_SENTENCES_NUM:
-            cleaned_sentences = random.sample(cleaned_sentences, k=MAX_SENTENCES_NUM)
+        elif len(cleaned_sentences) > max_sentence_num:
+            cleaned_sentences = random.sample(cleaned_sentences, k=max_sentence_num)
         
         if self.model_name == DEFAULT_MODEL_NAME:
             tokens = self._tokenize_text(cleaned_sentences)
@@ -98,10 +110,18 @@ class TransEmbedder(BaseEmbedder):
 
         return embs
 
-    def description2vec(self, text: str):
-        description = [text]
-        tokens = self._preprocess_messages(description, 1, 1)
-        channel_emb = self.channel2vec(tokens)
+    def description2vec(self, description: List[str], max_sentence_num=20):
+        sentences = self._preprocess_messages(
+            description,
+            min_word_num=1,
+            min_message_num=1,
+            min_sentence_num=1,
+            max_sentence_num=max_sentence_num,
+        )
+        if len(sentences) == 0:
+            channel_emb = None
+        else:
+            channel_emb = self.channel2vec(sentences)
         return channel_emb
 
 

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from typing import List
+from time import sleep
 import logging
 
 import telebot
@@ -14,6 +15,7 @@ LOGGER = logging.getLogger()
 
 path_to_config = "config.yaml"
 config: MainConfig = load_config(path_to_config)
+print(config)
 bot = telebot.TeleBot(config.bot.token)
 ranker = Ranker(config)
 
@@ -21,15 +23,18 @@ CHAN_SEARCH = "Поиск по каналу"
 DESC_SEARCH = "Поиск по описанию"
 RAND_SEARCH = "Случайный канал"
 HELP = "Помощь"
+MORE = "Еще каналы"
 
-markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
 itembtn1 = types.KeyboardButton(CHAN_SEARCH)
 itembtn2 = types.KeyboardButton(DESC_SEARCH)
 itembtn3 = types.KeyboardButton(RAND_SEARCH)
 itembtn4 = types.KeyboardButton(HELP)
+itembtn5 = types.KeyboardButton(MORE)
+
+markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
 markup.add(itembtn1, itembtn2, itembtn3, itembtn4)
 
-S0, S_CHAN, S_MES = range(3)
+S0, S_CHAN, S_DESC = range(3)
 user2state = defaultdict(int)  # dict of states of the conversations
 
 
@@ -61,13 +66,15 @@ def channel_search_choose(message: types.Message):
 
 @bot.message_handler(regexp=DESC_SEARCH)
 def descr_search(message: types.Message):
-    chat_id = message.chat.id
-    bot.send_message(
-        chat_id,
-        "Извините, данная функциональность находится в разработке",
-        reply_markup=markup
-    )
-    user2state[message.chat.id] = S0
+    bot.send_message(message.chat.id, "Укажи описание, по которому я буду искать канал. Чем более подробным обо будет, тем лучше будет результат")
+    user2state[message.chat.id] = S_DESC
+    # chat_id = message.chat.id
+    # bot.send_message(
+    #     chat_id,
+    #     "Извините, данная функциональность находится в разработке",
+    #     reply_markup=markup
+    # )
+    # user2state[message.chat.id] = S0
 
 
 @bot.message_handler(regexp=RAND_SEARCH)
@@ -90,10 +97,11 @@ def help_button_press(message: types.Message):
 
 
 @bot.message_handler(func=lambda message: user2state[message.chat.id] == S_CHAN)
-def similar_channel_sending(message: types.Message):
+def similar_channel_sending_chan(message: types.Message):
+    sleep(5)
     chat_id = message.chat.id
     text = message.text
-    top = ranker.get_closest_channels(text)
+    top = ranker.get_channels_by_username(text)
     if top is None:
         bot.send_message(
             chat_id, "Пока что я не могу найти каналы, похожие на этот",
@@ -101,6 +109,27 @@ def similar_channel_sending(message: types.Message):
         )
     else:
         bot.send_message(chat_id, "Вот 5 каналов, похожих на данный:")
+        bot.send_message(chat_id, array2prety(top))
+        bot.send_message(
+            chat_id,
+            "Может быть еще что-нибудь найдем?",
+            reply_markup=markup,
+        )
+
+
+@bot.message_handler(func=lambda message: user2state[message.chat.id] == S_DESC)
+def similar_channel_sending_desc(message: types.Message):
+    sleep(5)
+    chat_id = message.chat.id
+    text = message.text
+    top = ranker.get_channels_by_description(text)
+    if top is None:
+        bot.send_message(
+            chat_id, "По данному описанию я не могу найти ни одного канала, сорян",
+            reply_markup=markup
+        )
+    else:
+        bot.send_message(chat_id, "Вот каналы по описанию:")
         bot.send_message(chat_id, array2prety(top))
         bot.send_message(
             chat_id,

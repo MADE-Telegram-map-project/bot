@@ -13,3 +13,5 @@ transformers~=4.14.1
 sentence-transformers~=2.1.0
 -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html
 torch==1.8.2+cpu
+requests~=2.26.0
+beautifulsoup4~=4.10.0

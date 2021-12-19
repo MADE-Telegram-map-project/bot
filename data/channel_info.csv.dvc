@@ -1,0 +1,4 @@
+outs:
+- md5: 0b78b61c3438f43c6af3321780ce05eb
+  size: 1658666
+  path: channel_info.csv
