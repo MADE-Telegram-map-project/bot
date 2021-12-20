@@ -145,3 +145,4 @@ data/messages.pkl.gz
 .vscode
 tmp
 data/_emb_MiniLM
+core/data/emb_MiniLM_v1
