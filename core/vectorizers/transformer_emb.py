@@ -42,7 +42,7 @@ class TransEmbedder(BaseEmbedder):
             min_message_num=MIN_MESSAGE_NUM,
             min_sentence_num=MIN_SENTENCE_NUM,
             max_sentence_num=MAX_SENTENCES_NUM):
-       
+        assert isinstance(messages, list), "messages must be list of strings"
         sentences = []
         n_messages = 0
         for m in messages:
@@ -53,7 +53,7 @@ class TransEmbedder(BaseEmbedder):
                     sentences.append(sentence)
                     _n_sentences += 1
 
-            if _n_sentences > 1:
+            if _n_sentences >= 1:
                 n_messages += 1
         if n_messages < min_message_num:
             return []
@@ -111,6 +111,7 @@ class TransEmbedder(BaseEmbedder):
         return embs
 
     def description2vec(self, description: List[str], max_sentence_num=20):
+        assert isinstance(description, list), "description must be list of strings"
         sentences = self._preprocess_messages(
             description,
             min_word_num=1,

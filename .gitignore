@@ -138,8 +138,10 @@ dmypy.json
 cython_debug/
 
 env_*
+_env*
 dvc-remote-connection-313521-798fb98d4f88.json
 *.tar.gz
 data/messages.pkl.gz
 .vscode
 tmp
+data/_emb_MiniLM

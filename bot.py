@@ -18,6 +18,7 @@ config: MainConfig = load_config(path_to_config)
 print(config)
 bot = telebot.TeleBot(config.bot.token)
 ranker = Ranker(config)
+print("ranker loaded")
 
 CHAN_SEARCH = "Поиск по каналу"
 DESC_SEARCH = "Поиск по описанию"

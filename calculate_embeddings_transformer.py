@@ -4,7 +4,7 @@ from core.read_write import write_numpy_array
 from core.preprocessing import messages_generator
 from core.vectorizers.transformer_emb import TransEmbedder, NEW_MODEL_NAME
 
-EMB_NAME = "emb_MiniLM"
+EMB_NAME = "emb_MiniLM_v1"
 NUMBER_OF_CHANNELS = -1  # -1 means all
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     ch, embs = emb_data.compute_embeddings(NUMBER_OF_CHANNELS)
     print(embs.shape)
     
-    _dir = "data/{}".format(EMB_NAME)
+    _dir = "core/data/{}".format(EMB_NAME)
     os.makedirs(_dir, exist_ok=True)
 
     path_to_channels = os.path.join(_dir, "channels.npy")
