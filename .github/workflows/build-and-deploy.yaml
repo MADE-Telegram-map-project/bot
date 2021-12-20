@@ -89,7 +89,7 @@ jobs:
           env:
             IMAGE_NAME: ${{ steps.get_image_name.outputs.image_name }}
             DOCKER_BUILDKIT: 1
-          run: docker compose -f ./docker-compose.test.yaml up --build
+          run: docker compose -f ./docker-compose.test.yaml up --exit-code-from test-tg-bot  --build
 
         - name: Log in to registry
           if: ${{ github.event_name == 'push' || github.event.inputs.forceImagePush == 'true' }}

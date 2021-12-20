@@ -15,3 +15,4 @@ sentence-transformers~=2.1.0
 torch==1.8.2+cpu
 requests~=2.26.0
 beautifulsoup4~=4.10.0
+pytest~=6.2.5
