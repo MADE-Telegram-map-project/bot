@@ -64,5 +64,7 @@ def test_descr2vec_in_ranker(local_ranker, descr):
         assert len(sim) > 0, "returned 0 channels"
 
 
-test_get_closest_channel(Ranker(config), "latinapopacanski")
-test_descr2vec_in_ranker(Ranker(config), "Носорог съел собянина")
+if __name__ == "__main__":
+    ranker = Ranker(config)
+    test_get_closest_channel(ranker, "latinapopacanski")
+    test_descr2vec_in_ranker(ranker, "Носорог съел собянина")
