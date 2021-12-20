@@ -14,10 +14,11 @@ LOGGER = logging.getLogger()
 
 path_to_config = "config.yaml"
 config: MainConfig = load_config(path_to_config)
-print(config)
+LOGGER.debug(f"{config}")
 bot = telebot.TeleBot(config.bot.token)
 ranker = Ranker(config)
-print("ranker loaded")
+LOGGER.info("Ranker loaded")
+print("Ranker loaded")
 
 CHAN_SEARCH = "Поиск по каналу"
 DESC_SEARCH = "Поиск по описанию"
@@ -42,10 +43,14 @@ def array2prety(array):
     return "\n\n".join(["@{} - {}".format(*row) for row in array])
 
 
+def regexp_envelope(text: str):
+    return "^{}$".format(text)
+
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message: types.Message):
     bot.send_message(
-        message.chat.id, "Пришли мне ссылку на канал и я найду похожие на него")
+        message.chat.id, "Привет! Я могу найти для тебя интересные каналы.")
     send_help(message)
 
 
@@ -53,31 +58,25 @@ def send_welcome(message: types.Message):
 def send_help(message: types.Message):
     bot.send_message(
         message.chat.id,
-        "Ссылка на канал может быть в формате:\n\t@channelname\n\tt.me/channelname\n\thttps://t.me/channelname\n\tchannelname",
+        "Чтобы найти нужные каналы, нужно нажать кнопку и отправить мне или описание, или похожий канал.\n"
+        "Ссылка на канал может быть в формате:\n\t@channelnamе\n\tt.me/channelnamе\n\thttps://t.me/channelnamе\n\tchannelname",
         reply_markup=markup
     )
 
 
-@bot.message_handler(regexp=CHAN_SEARCH)
+@bot.message_handler(regexp=regexp_envelope(CHAN_SEARCH))
 def channel_search_choose(message: types.Message):
     bot.send_message(message.chat.id, "Укажи ссылку на канал")
     user2state[message.chat.id] = S_CHAN
 
 
-@bot.message_handler(regexp=DESC_SEARCH)
+@bot.message_handler(regexp=regexp_envelope(DESC_SEARCH))
 def descr_search(message: types.Message):
-    bot.send_message(message.chat.id, "Укажи описание, по которому я буду искать канал. Чем более подробным обо будет, тем лучше будет результат")
+    bot.send_message(message.chat.id, "Укажи описание, по которому я буду искать каналы. Чем более подробным оно будет, тем лучше будет результат. ")
     user2state[message.chat.id] = S_DESC
-    # chat_id = message.chat.id
-    # bot.send_message(
-    #     chat_id,
-    #     "Извините, данная функциональность находится в разработке",
-    #     reply_markup=markup
-    # )
-    # user2state[message.chat.id] = S0
 
 
-@bot.message_handler(regexp=RAND_SEARCH)
+@bot.message_handler(regexp=regexp_envelope(RAND_SEARCH))
 def random_search(message: types.Message):
     chat_id = message.chat.id
     rand_channels = ranker.get_random_channels()
@@ -90,7 +89,7 @@ def random_search(message: types.Message):
     user2state[message.chat.id] = S0
 
 
-@bot.message_handler(regexp=HELP)
+@bot.message_handler(regexp=regexp_envelope(HELP))
 def help_button_press(message: types.Message):
     send_help(message)
     user2state[message.chat.id] = S0
