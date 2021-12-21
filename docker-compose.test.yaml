@@ -7,4 +7,4 @@ services:
     command: python ./test_functionality.py
     build: .
     environment:
-      - TELEMAP_BOT_TOKEN=none
+      - TELEMAP_BOT_TOKEN=${TELEMAP_BOT_TOKEN:?}
