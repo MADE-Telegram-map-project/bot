@@ -110,16 +110,18 @@ class TransEmbedder(BaseEmbedder):
 
         return embs
 
-    def description2vec(self, description: List[str], max_sentence_num=20):
+    def description2vec(self, description: List[str], max_sentence_num=20, min_word_num=1):
         assert isinstance(description, list), "description must be list of strings"
         sentences = self._preprocess_messages(
             description,
-            min_word_num=1,
+            min_word_num=min_word_num,
             min_message_num=1,
             min_sentence_num=1,
             max_sentence_num=max_sentence_num,
         )
         if len(sentences) == 0:
+            channel_emb = None
+        elif len(sentences) == 1 and len(sentences[0].strip()) == 0:
             channel_emb = None
         else:
             channel_emb = self.channel2vec(sentences)
