@@ -112,9 +112,9 @@ class Ranker:
         channels = df[["link", "title", "sim"]].values
         return channels
 
-    def description_vectorize(self, description: List[str]) -> Union[np.ndarray, None]:
+    def description_vectorize(self, description: List[str], min_word_num=1) -> Union[np.ndarray, None]:
         assert isinstance(description, list)
-        emb = self.transformer.description2vec(description)
+        emb = self.transformer.description2vec(description, min_word_num=min_word_num)
         return emb
 
     def known_channel_processing(self, username: str, k=5) -> SimilarChannels:
@@ -133,13 +133,13 @@ class Ranker:
         sim_chans = sim_chans[:k]  # TODO modify for more-button or not this channel will be in history when more-button will be pressed
         return sim_chans
 
-    def get_unk_channel_vec(self, username: str):
+    def get_unk_channel_vec(self, username: str, min_word_num=3):
         header, messages = parse_channel_web(username)
         messages.append(header)
         if len(messages) == 0:
             emb = None  # TODO status of channel that hasn't good description
         else:
-            emb = self.description_vectorize(messages)
+            emb = self.description_vectorize(messages, min_word_num)
         return emb
 
     def search_by_embedding(self, emb: np.ndarray) -> SimilarChannels:

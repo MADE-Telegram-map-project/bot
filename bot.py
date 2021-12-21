@@ -59,8 +59,10 @@ def send_welcome(message: types.Message):
 def send_help(message: types.Message):
     bot.send_message(
         message.chat.id,
-        "Чтобы найти нужные каналы, нужно нажать кнопку и отправить мне или описание, или похожий канал.\n"
-        "Ссылка на канал может быть в формате:\n\t@channelnamе\n\tt.me/channelnamе\n\thttps://t.me/channelnamе\n\tchannelname",
+        "Чтобы найти интересующие каналы, нужно нажать кнопку и отправить мне или описание, или похожий канал.\n"
+        "Ссылка на канал может быть в формате:\n\t@channelnamе\n\tt.me/channelnamе\n\thttps://t.me/channelnamе\n\tchannelname\n\n"
+        "Я работаю только с текстом, поэтому чем более подробным будет описание или чем более насыщенный текстом канал я получу, тем лучше будет результат поиска.\n"
+        "В скобках указывается процент соответствия найденного канала запросу.",
         reply_markup=markup
     )
 
@@ -73,7 +75,7 @@ def channel_search_choose(message: types.Message):
 
 @bot.message_handler(regexp=regexp_envelope(DESC_SEARCH))
 def descr_search(message: types.Message):
-    bot.send_message(message.chat.id, "Укажи описание, по которому я буду искать каналы. Чем более подробным оно будет, тем лучше будет результат. ")
+    bot.send_message(message.chat.id, "Укажи описание, по которому я буду искать каналы.")
     user2state[message.chat.id] = S_DESC
 
 
@@ -103,7 +105,7 @@ def similar_channel_sending_chan(message: types.Message):
     top = ranker.get_channels_by_username(text)
     if top is None:
         bot.send_message(
-            chat_id, "Пока что я не могу найти каналы, похожие на этот",  # TODO it's not channel
+            chat_id, "Скорее всего это не канал или о нем практически нет текстовой информации",  # TODO it's not channel
             reply_markup=markup
         )
     else:
@@ -131,7 +133,7 @@ def similar_channel_sending_desc(message: types.Message):
         bot.send_message(chat_id, array2prety(top))
         bot.send_message(
             chat_id,
-            "Может быть еще что-нибудь найдем?",
+            "Может быть найдем что-нибудь другое?",
             reply_markup=markup,
         )
 
@@ -140,7 +142,7 @@ def similar_channel_sending_desc(message: types.Message):
 def catch_all(message: telebot.types.Message):
     bot.send_message(
         message.chat.id,
-        'Ничего не понял. Может лучше найдем интересный канал?',
+        'Ничего не понял. Чтобы найти интересный канал, нажми на кпопку и отправь запрос?',
         reply_markup=markup
     )
     user2state[message.chat.id] = S0
