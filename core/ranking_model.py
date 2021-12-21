@@ -9,20 +9,21 @@ import pkg_resources
 from sklearn.metrics.pairwise import cosine_similarity
 
 from core.config import load_config
-from core.entities.data import MainConfig
+from core.entities.data import MainConfig, SimilarChannels
 from core.read_write import read_numpy_array
 from core.vectorizers import TransEmbedder
 from core.web_parsing import parse_channel_web
 
-SIM_CUTOFF_DEFAULT = 0.7
-SIM_CUTOFF_DESCR = 0.5
+SIM_CUTOFF_DEFAULT = 0.6
+SIM_CUTOFF_DESCR = 0.4
 
 
 class Ranker:
-    def __init__(self, config: MainConfig, use_trans=True, sim_cutoff=SIM_CUTOFF_DEFAULT):
+    def __init__(self, config: MainConfig, use_trans=True, sim_cutoff=SIM_CUTOFF_DEFAULT, num_of_sim=50):
         self.config = config
         self.use_trans = use_trans
         self.sim_cutoff = sim_cutoff
+        self.num_of_sim = num_of_sim
 
         self.distance_func = cosine_similarity
         self._logger = logging.getLogger(__name__)
@@ -50,20 +51,22 @@ class Ranker:
             self._logger.info("Load transformer model...")
             self.transformer = TransEmbedder(messages_data=None, load_data=False)
 
-    def _precalculate_sim_scores(self):
+    def _precalculate_sim_scores(self, num_of_sim=None):
+        num_of_sim = num_of_sim or self.num_of_sim
+        self._logger.info("Precalculate cosine similarity scores...")
         cosine_similarities = self.distance_func(self.emb)
 
-        res_sort = np.sort(cosine_similarities)
-        res_argsort = np.argsort(cosine_similarities)
-        mask = res_sort > self.sim_cutoff
+        res_sort = np.sort(cosine_similarities)[:, -num_of_sim - 1:-1][:, ::-1]
+        res_argsort = np.argsort(cosine_similarities)[:, -num_of_sim - 1:-1][:, ::-1]
 
         for i in range(len(cosine_similarities)):
-            indexes_of_sim = res_argsort[i][mask[i]][:-1]
-            indexes_of_sim = list(indexes_of_sim[::-1])  # descending
-            similar_channel_ids = [self.chan_ids[x] for x in indexes_of_sim]
             channel_id = self.chan_ids[i]
             username = self.channel_id2username[channel_id]
-            self.username2similar[username] = similar_channel_ids
+
+            indexes_of_sim = res_argsort[i]
+            similar_channel_ids = [self.chan_ids[x] for x in indexes_of_sim]
+            sim = res_sort[i]
+            self.username2similar[username] = SimilarChannels(similar_channel_ids, sim, channel_id)
 
     def get_channels_by_username(self, query: str, k=5):
         """ main func: search by username"""
@@ -73,21 +76,16 @@ class Ranker:
             return None  # TODO status of unknown channel
 
         if username in self.username2similar:
-            sim_chan_indexes = self.known_channel_processing(username, k)
+            sim_chans = self.known_channel_processing(username, k)
         else:
             if not self.use_trans:
                 return None  # TODO status of no loaded transformer
-            sim_chan_indexes = self.unknown_channel_processing(username, k)
+            sim_chans = self.unknown_channel_processing(username, k)
 
-        if sim_chan_indexes is None:
-            return None
+        if sim_chans is None or len(sim_chans) == 0:
+            return None  # TODO status of no similar
 
-        df = self.meta[
-            (self.meta.channel_id.isin(sim_chan_indexes)) &
-            (self.meta.link != username) &
-            (~self.meta.link.str.endswith("bot"))
-        ]
-        channels = df[["link", "title"]].values
+        channels = self._form_cahnnels_result(sim_chans, username)
         return channels
 
     def get_channels_by_description(
@@ -97,16 +95,19 @@ class Ranker:
             return None  # TODO status of no loaded transformer
 
         emb = self.description_vectorize([description])
-        sim_chan_indexes = self.search_by_embedding(emb, sim_cutoff=sim_cutoff)
-        if len(sim_chan_indexes) == 0:
+        sim_chans = self.search_by_embedding(emb)
+        if len(sim_chans) == 0:
             return None  # TODO status no channels for such descr, try to extend it
+        
+        top = sim_chans[:k]
+        channels = self._form_cahnnels_result(top)
+        return channels
 
-        sim_chan_indexes = sim_chan_indexes[:k]
-        df = self.meta[
-            (self.meta.channel_id.isin(sim_chan_indexes)) &
-            (~self.meta.link.str.endswith("bot"))
-        ]
-        channels = df[["link", "title"]].values
+    def _form_cahnnels_result(self, sim_chans: SimilarChannels, username=None) -> np.ndarray:
+        df = self.meta[(self.meta.channel_id.isin(sim_chans.indexes))].reset_index(drop=True)
+        df["sim"] = sim_chans.similarities
+        df = df[(~df.link.str.endswith("bot")) & (df.link != username)]
+        channels = df[["link", "title", "sim"]].values
         return channels
 
     def description_vectorize(self, description: List[str]) -> Union[np.ndarray, None]:
@@ -114,21 +115,21 @@ class Ranker:
         emb = self.transformer.description2vec(description)
         return emb
 
-    def known_channel_processing(self, username: str, k=5) -> List[int]:
+    def known_channel_processing(self, username: str, k=5) -> SimilarChannels:
         """ return indexes of similar channels """
-        sim_channel_ids = self.username2similar[username]
-        sim_channel_ids_top = sim_channel_ids[:k]
-        return sim_channel_ids_top
+        sim_channels = self.username2similar[username]
+        sim_channels_top = sim_channels[:k]
+        return sim_channels_top
 
-    def unknown_channel_processing(self, username: str, k=5) -> List[int]:
+    def unknown_channel_processing(self, username: str, k=5) -> SimilarChannels:
         emb = self.get_unk_channel_vec(username)
         if emb is None:
             # TODO channel noInfo status
             return None
-        sim_chan_indexes = self.search_by_embedding(emb)
-        self.username2similar[username] = sim_chan_indexes
-        sim_chan_indexes = sim_chan_indexes[:k]  # TODO modify for more-button or not this channel will be in history when more-button will be pressed
-        return sim_chan_indexes
+        sim_chans = self.search_by_embedding(emb)
+        self.username2similar[username] = sim_chans
+        sim_chans = sim_chans[:k]  # TODO modify for more-button or not this channel will be in history when more-button will be pressed
+        return sim_chans
 
     def get_unk_channel_vec(self, username: str):
         header, messages = parse_channel_web(username)
@@ -139,19 +140,26 @@ class Ranker:
             emb = self.description_vectorize(messages)
         return emb
 
-    def search_by_embedding(self, emb: np.ndarray, sim_cutoff=None):
+    def search_by_embedding(self, emb: np.ndarray) -> SimilarChannels:
         assert hasattr(emb, "__len__") and len(emb) > 0
         cosine_similarities = self.distance_func(emb.reshape(1, -1), self.emb).squeeze()
-        res_sort = np.sort(cosine_similarities)
-        res_argsort = np.argsort(cosine_similarities)
-        sim_cutoff = sim_cutoff or self.sim_cutoff
-        mask = res_sort > sim_cutoff
 
-        indexes_of_sim = res_argsort[mask]
-        indexes_of_sim = list(indexes_of_sim[::-1])  # descending
+        sim = np.sort(cosine_similarities)[-self.num_of_sim - 1:-1][::-1]
+        indexes_of_sim = np.argsort(cosine_similarities)[-self.num_of_sim - 1:-1][::-1]
+
+        # res_sort = np.sort(cosine_similarities)
+        # res_argsort = np.argsort(cosine_similarities)
+        # sim_cutoff = sim_cutoff or self.sim_cutoff
+        # mask = res_sort > sim_cutoff
+
+        # indexes_of_sim = res_argsort[mask]
+        # indexes_of_sim = list(indexes_of_sim[::-1])  # descending
+
+        # indexes_of_sim = res_argsort
+        # sim = res_sort
         similar_channel_ids = [self.chan_ids[x] for x in indexes_of_sim]
-
-        return similar_channel_ids
+        sim_chans = SimilarChannels(similar_channel_ids, sim)
+        return sim_chans
 
     def get_random_channels(self, n=5):
         df = self.meta.sample(n)
@@ -183,13 +191,13 @@ if __name__ == "__main__":
     print(list(ranker.username2similar.keys())[:50])
     print("ranker loaded\n\n")
 
-    lst = ["psychics", "https://t.me/latinapopacanski"]
+    lst = ["https://t.me/latinapopacanski", "@PostShitposting", "psychics"]
     for username in lst:
         print(username)
         top = ranker.get_channels_by_username(username)
         if top is None:
             print("No embedding")
-            exit(1)
+            # exit(1)
         print(top)
         print("\n")
 

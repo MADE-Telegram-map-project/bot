@@ -40,7 +40,8 @@ user2state = defaultdict(int)  # dict of states of the conversations
 
 
 def array2prety(array):
-    return "\n\n".join(["@{} - {}".format(*row) for row in array])
+    array[:, 2] *= 100  # similarity to percent
+    return "\n\n".join(["@{} - {} ({:.0f}%)".format(*row) for row in array])
 
 
 def regexp_envelope(text: str):
@@ -102,7 +103,7 @@ def similar_channel_sending_chan(message: types.Message):
     top = ranker.get_channels_by_username(text)
     if top is None:
         bot.send_message(
-            chat_id, "Пока что я не могу найти каналы, похожие на этот",
+            chat_id, "Пока что я не могу найти каналы, похожие на этот",  # TODO it's not channel
             reply_markup=markup
         )
     else:
