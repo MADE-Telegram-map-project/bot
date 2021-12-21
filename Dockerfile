@@ -39,7 +39,7 @@ ENV PATH=/opt/venv/bin:${PATH}
 
 WORKDIR /home/app
 
-COPY ./config.yaml ./log_settings.yaml ./test_functionality.py ./download_model.py ./
+COPY ./config.yaml ./config.test.yaml ./log_settings.yaml ./test_functionality.py ./download_model.py ./
 
 RUN python ./download_model.py
 

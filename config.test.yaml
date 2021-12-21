@@ -1,0 +1,7 @@
+data:
+  dir: data
+  ch_full: ${.dir}/emb_MiniLM/channels.npy
+  emb_full: ${.dir}/emb_MiniLM/embeddings.npy
+  channels: ${.dir}/Channels.csv
+bot:
+  token: none
