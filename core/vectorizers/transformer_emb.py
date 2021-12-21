@@ -121,6 +121,8 @@ class TransEmbedder(BaseEmbedder):
         )
         if len(sentences) == 0:
             channel_emb = None
+        elif len(sentences) == 1 and len(sentences[0].strip()) == 0:
+            channel_emb = None
         else:
             channel_emb = self.channel2vec(sentences)
         return channel_emb

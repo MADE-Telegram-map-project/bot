@@ -95,6 +95,8 @@ class Ranker:
             return None  # TODO status of no loaded transformer
 
         emb = self.description_vectorize([description])
+        if emb is None:
+            return None
         sim_chans = self.search_by_embedding(emb)
         if len(sim_chans) == 0:
             return None  # TODO status no channels for such descr, try to extend it
@@ -147,16 +149,6 @@ class Ranker:
         sim = np.sort(cosine_similarities)[-self.num_of_sim - 1:-1][::-1]
         indexes_of_sim = np.argsort(cosine_similarities)[-self.num_of_sim - 1:-1][::-1]
 
-        # res_sort = np.sort(cosine_similarities)
-        # res_argsort = np.argsort(cosine_similarities)
-        # sim_cutoff = sim_cutoff or self.sim_cutoff
-        # mask = res_sort > sim_cutoff
-
-        # indexes_of_sim = res_argsort[mask]
-        # indexes_of_sim = list(indexes_of_sim[::-1])  # descending
-
-        # indexes_of_sim = res_argsort
-        # sim = res_sort
         similar_channel_ids = [self.chan_ids[x] for x in indexes_of_sim]
         sim_chans = SimilarChannels(similar_channel_ids, sim)
         return sim_chans
@@ -202,6 +194,7 @@ if __name__ == "__main__":
         print("\n")
 
     descriptions = [
+        "https://t.me/latinapopacanski",
         "латинский язык и древний рим", "канал про медицину", "медицина", 
         "политика", "работа в париже", "канал про рыбалку",
     ]

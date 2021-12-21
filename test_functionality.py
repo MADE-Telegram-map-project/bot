@@ -58,10 +58,7 @@ def test_get_closest_channel(local_ranker, username):
 )
 def test_descr2vec_in_ranker(local_ranker, descr):
     sim = local_ranker.get_channels_by_description(descr)
-    if descr == "Трейдинг":
-        assert sim is None, "must be None in this case"
-    else:
-        assert len(sim) > 0, "returned 0 channels"
+    assert len(sim) > 0 and len(sim) <= 5, "returned 0 channels"
 
 
 if __name__ == "__main__":

@@ -20,12 +20,12 @@ stemmer_ru = SnowballStemmer("russian")
 stemmer_en = SnowballStemmer("english")
 
 LINK_REGEX = {
-    "(http://|https://)?t\\.me/joinchat/[a-zA-Z0-9_-]{5,32}": " ",
-    "(http://|https://)?t\\.me/[a-zA-Z0-9_]{5,32}": " ",
-    "@[a-z0-9_A-Z]+": " ",
+    "(http://|https://)?t\\.me/joinchat/[a-zA-Z0-9_-]{5,32}": "",
+    "(http://|https://)?t\\.me/[a-zA-Z0-9_]{5,32}": "",
+    "@[a-z0-9_A-Z]+": "",
     r'<img[^<>]+(>|$)': " image_token ",
-    r'<[^<>]+(>|$)': " ",
-    r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+': " url_token "
+    r'<[^<>]+(>|$)': "",
+    r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+': ""
 }
 
 
