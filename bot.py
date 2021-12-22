@@ -40,8 +40,11 @@ user2state = defaultdict(int)  # dict of states of the conversations
 
 
 def array2prety(array):
-    array[:, 2] *= 100  # similarity to percent
-    return "\n\n".join(["@{} - {} ({:.0f}%)".format(*row) for row in array])
+    if array.shape[1] == 3:
+        array[:, 2] *= 100  # similarity to percent
+        return "\n\n".join(["@{} - {} ({:.0f}%)".format(*row) for row in array])
+    elif array.shape[1] == 2:
+        return "\n\n".join(["@{} - {}".format(*row) for row in array])
 
 
 def regexp_envelope(text: str):
@@ -105,7 +108,7 @@ def similar_channel_sending_chan(message: types.Message):
     top = ranker.get_channels_by_username(text)
     if top is None:
         bot.send_message(
-            chat_id, "Скорее всего это не канал или о нем практически нет текстовой информации",  # TODO it's not channel
+            chat_id, "Скорее всего, это не канал или о нем практически нет текстовой информации",  # TODO it's not channel
             reply_markup=markup
         )
     else:
@@ -142,12 +145,12 @@ def similar_channel_sending_desc(message: types.Message):
 def catch_all(message: telebot.types.Message):
     bot.send_message(
         message.chat.id,
-        'Ничего не понял. Чтобы найти интересный канал, нажми на кпопку и отправь запрос?',
+        'Ничего не понял. Чтобы найти интересный канал, нажми на кпопку и отправь запрос',
         reply_markup=markup
     )
     user2state[message.chat.id] = S0
 
 
 if __name__ == '__main__':
-    LOGGER.info("Bot started...")
+    LOGGER.info("Starting bot...")
     bot.polling()
